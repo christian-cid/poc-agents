@@ -39,13 +39,10 @@ Si la respuesta depende de la persona dueña del proyecto, el agente receptor lo
 
 ## Primer CDU
 
-**CDU-001 — Responder "¿En qué te ayudo?" por WhatsApp.** Brief inicial de la persona dueña, para que `analista-cdu` lo convierta en spec:
+**CDU-001 — Responder preguntas sobre el auto por WhatsApp.** Una persona escribe al número de WhatsApp Business y un agente de ElevenLabs le responde preguntas sobre su GWM Haval H6, usando únicamente el manual de usuario indexado como base de conocimiento (RAG). El saludo "¿en qué te ayudo?" forma parte del flujo como primer mensaje.
 
-- **Flujo:** una persona escribe un mensaje a un número de WhatsApp Business; un agente de ElevenLabs le responde preguntando en qué la puede ayudar.
-- **Piezas que el integrador debe cubrir:**
-  - Cerebro: agente de ElevenLabs con un prompt que responde a este caso de uso.
-  - Herramientas de integración con WhatsApp: importación del número y mensajería habilitada.
-  - Conversaciones: comportamiento y análisis básico en el panel.
-  - Despliegue: agente como código y entornos para desplegar.
-  - Pruebas: tests del agente que validen el criterio de aceptación.
-- **Fuera de este CDU:** FAQ y RAG, que serán un CDU posterior.
+- **Spec:** `specs/001-preguntas-manual-haval-h6/spec.md` (estado: Propuesta).
+- **Guía técnica del integrador:** `docs/guias/cdu-001-servicios-y-configuracion.md`.
+- **Handoffs abiertos:** ver `docs/equipo/handoffs/`.
+- **Piezas que el integrador debe cubrir:** cerebro (agente y prompt), integración con WhatsApp, conversaciones, despliegue como código y pruebas del agente.
+- **Fuera de este CDU:** llamadas de voz, plantillas salientes, traspaso a humano y otros modelos de auto.
