@@ -24,3 +24,6 @@ tmp/
 
 # Ajustes locales de Claude Code (pueden contener datos privados)
 .claude/settings.local.json
+
+# Material con derechos de GWM: el PDF del manual no se versiona
+*.pdf
