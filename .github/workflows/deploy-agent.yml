@@ -1,0 +1,73 @@
+name: Deploy agent
+
+# Se dispara A MANO: Actions -> Deploy agent -> Run workflow.
+# Primero con dry_run=true (solo lecturas) y luego con dry_run=false.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Solo lecturas: muestra que haria sin escribir nada en ElevenLabs"
+        type: boolean
+        default: true
+      prune:
+        description: "Borrar documentos obsoletos del CDU-001 (liberan cupo del plan Starter)"
+        type: boolean
+        default: false
+      agent_id:
+        description: "Opcional: ID del agente a actualizar (agent_...). Vacio = buscar por nombre"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-agent-poc
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validar (sin secretos)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias de prueba
+        run: python -m pip install -r scripts/requirements.txt
+      - name: Lint de YAML y JSON
+        run: python scripts/lint_files.py
+      - name: Validaciones locales (prompt, manual, tamanos)
+        run: python scripts/deploy_agent.py --check
+      - name: Pruebas unitarias con API simulada
+        run: python -m pytest scripts/tests -q
+
+  deploy:
+    name: Desplegar en ElevenLabs
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: POC
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Sincronizar agente y base de conocimiento
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          PRUNE: ${{ inputs.prune }}
+          AGENT_ID: ${{ inputs.agent_id }}
+        run: |
+          args=()
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          if [ "$PRUNE" = "true" ]; then args+=(--prune); fi
+          if [ -n "$AGENT_ID" ]; then args+=(--agent-id "$AGENT_ID"); fi
+          python scripts/deploy_agent.py "${args[@]}"

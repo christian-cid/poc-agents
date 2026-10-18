@@ -1,0 +1,4 @@
+# deploy_agent.py y elevenlabs_client.py usan solo la biblioteca estandar de Python (3.10+).
+# Lo de abajo es para lint y pruebas (job `validate`, sin secretos).
+pytest>=8,<10
+PyYAML>=6,<7

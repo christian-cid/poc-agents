@@ -1,0 +1,40 @@
+{
+  "deploy": {
+    "prompt_file": "agent_configs/cdu-001-system-prompt.md",
+    "prompt_resolutions_file": "agent_configs/cdu-001-prompt-resoluciones.json",
+    "knowledge_dir": "knowledge/manual-h6",
+    "doc_name_prefix": "cdu001-h6__",
+    "min_doc_bytes": 500,
+    "max_total_bytes": 2000000,
+    "index_wait_seconds": 600,
+    "index_poll_seconds": 5
+  },
+  "agent": {
+    "name": "CDU-001 Haval H6 - manual (POC)",
+    "tags": ["poc-agents", "cdu-001"],
+    "conversation_config": {
+      "agent": {
+        "language": "es",
+        "first_message": "",
+        "prompt": {
+          "llm": "gemini-2.5-flash",
+          "rag": {
+            "enabled": true,
+            "embedding_model": "e5_mistral_7b_instruct",
+            "max_vector_distance": 0.6,
+            "max_documents_length": 50000,
+            "max_retrieved_rag_chunks_count": 20
+          },
+          "built_in_tools": {
+            "end_call": {
+              "type": "system",
+              "name": "end_call",
+              "description": "",
+              "params": { "system_tool_type": "end_call" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
