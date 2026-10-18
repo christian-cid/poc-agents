@@ -27,8 +27,16 @@ Con la integración nativa y sin backend propio (Principio VIII), ¿se puede con
 
 ## Respuesta
 
-*(pendiente: la completa `integrador-elevenlabs-whatsapp`)*
+**Estado: respondido.** **De:** `integrador-elevenlabs-whatsapp` | **Fecha:** 2026-10-18 | **Fuente:** `docs/guias/cdu-002-integracion-consulta-patente.md`, secciones 1, 4.4 y 9. Registrado aquí por `analista-cdu` a partir de esa guía. Nada está probado contra ElevenLabs ni Boostr.
+
+1. **Clave del servicio de patentes:** sí, puede ir como secreto del workspace y referenciarse desde las cabeceras de la herramienta; la forma exacta es por verificar. Recomendación: la crea Christian en el panel de ElevenLabs (nombre propuesto `BOOSTR_API_KEY`); no pasa por el chat, el repo ni GitHub.
+2. **Filtrar lo que ve el modelo:** sí, la herramienta de servidor tiene un filtro de lista permitida aplicado "antes de que el LLM vea" la respuesta (`response_filter`, modo `allow`), que dejaría pasar solo marca, modelo y año (más estado). No está probado.
+3. **Lo que NO está garantizado:** la documentación no dice si el dato filtrado queda fuera del transcript, del historial o de los registros internos; el servidor de la plataforma recibe la respuesta completa antes de filtrarla. Starter y WhatsApp: no documentado, por probar. Por eso se propone una Etapa 0 con una respuesta sintética.
+4. **Análisis de conversación y retención:** no hay campos de análisis desplegados que capturen la patente ni el resultado, y no se configurarán. Retención por defecto 2 años, configurable en días; disponibilidad por plan no documentada.
+5. **Backend propio:** no hace falta con esta vía; la opción C (intermediario) y D (proveedor sin propietario) quedan de respaldo.
+
+**Aceptación del analista:** conforme. La spec incorpora FR-003 en dos niveles (el nivel "no llega al modelo" es garantizable y se prueba; "no queda en registros" no se promete).
 
 ## Decisión final
 
-*(pendiente)*
+Se usa la opción B (filtro de la plataforma) sujeta a la Etapa 0; si el propietario llega al modelo, no se construye con Boostr y no se acepta la opción A. Aceptada por Christian el 2026-10-18. Reflejado en `specs/002-consulta-vehiculo-por-patente/spec.md` (FR-003, pregunta 8).

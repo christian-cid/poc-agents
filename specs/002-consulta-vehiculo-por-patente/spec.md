@@ -4,9 +4,11 @@
 
 **Creado**: 2026-10-18
 
-**Estado**: Propuesta
+**Estado**: Propuesta (decisiones parciales)
 
-**Autor**: `analista-cdu`. Revisión de viabilidad pendiente: `integrador-elevenlabs-whatsapp` (handoffs 004 y 005).
+**Autor**: `analista-cdu`. Viabilidad: `integrador-elevenlabs-whatsapp` respondió los handoffs 004 y 005 y abrió el 006 (ajustes aplicados aquí). Guía técnica: `docs/guias/cdu-002-integracion-consulta-patente.md`.
+
+**Decisiones de Christian (2026-10-18)**: país Chile, opción B de integración, acepta que el servicio deje de funcionar y acepta ver su propio nombre y RUT en sus pruebas. Detalle en "Preguntas abiertas" y en "Registro de decisiones".
 
 **Entrada**: pedido de la persona dueña (Christian): sumar al agente de CDU-001 una consulta por API que, a partir de la patente chilena (su ejemplo: [PATENTE_DE_CHRISTIAN], un Haval H6), averigüe el modelo del auto. Christian mencionó también el RUT; la decisión previa del equipo es **no** diseñar búsqueda de vehículos por RUT (ver Historia 4).
 
@@ -82,7 +84,7 @@ Con el auto confirmado, el agente decide si el manual indexado (edición 2021.12
 
 1. **Dado** un auto confirmado que NO es un Haval H6, **cuando** la persona hace una pregunta, **entonces** el agente avisa que su información es del manual del Haval H6 y que no corresponde a ese modelo, y no responde con datos del manual como si aplicaran.
 2. **Dado** un Haval H6 confirmado con año distinto de la edición del manual (2021), **cuando** la persona pregunta, **entonces** el agente avisa una vez que el manual indexado es la edición 2021 y puede no corresponder a su auto, y recomienda confirmar con un distribuidor autorizado. No afirma qué años cubre el manual, porque el manual no lo declara año por año. Si "año" es año de fabricación o de modelo es [POR DEFINIR; por probar qué devuelve la API].
-3. **Dado** un Haval H6 con año igual al de la edición, **cuando** la persona pregunta algo que depende de la variante (motor, tracción, caja), **entonces** el agente no asume la variante: pregunta cuál aplica, o ofrece los valores de cada variante con su etiqueta. Si la fuente devuelve el motor, el agente lo usa **solo como pista que confirma con la persona**; que la fuente devuelva el motor en el formato esperado es [POR PROBAR].
+3. **Dado** un Haval H6 con año igual al de la edición, **cuando** la persona pregunta algo que depende de la variante (motor, tracción, caja), **entonces** el agente no asume la variante: **siempre** pregunta cuál aplica, o ofrece los valores de cada variante con su etiqueta. En el MVP la patente no se usa para deducir la variante: el motor ni siquiera llega al agente (FR-002). Usar el motor como pista queda como mejora futura, tras ver un valor real de la API.
 4. **Dado** un auto confirmado, **cuando** el agente responde sobre el auto, **entonces** el contenido de las respuestas sigue saliendo **únicamente del manual** (Principio III); marca, modelo y año de la patente sirven para orientar, nunca como fuente de datos técnicos del auto.
 
 ---
@@ -171,17 +173,22 @@ Una persona quiere consultar el manual para más de un auto. **Queda fuera del M
 ### Requisitos funcionales
 
 - **FR-001**: El agente MUST consultar un vehículo solo cuando la persona entregó una patente con formato chileno válido (actual: 4 letras y 2 números; antiguo: 2 letras y 4 números) y MUST NOT consultar texto con otro formato.
-- **FR-002**: El agente MUST mostrar, como máximo, **marca, modelo y año** del vehículo. Cualquier otro dato que devuelva la fuente (tipo, motor, dígito verificador, etc.) MUST NOT mostrarse tal cual; el motor, si llega, solo se usa para orientar una pregunta (Historia 2, escenario 3) [POR DEFINIR por Christian si basta con esto].
-- **FR-003**: El agente MUST NOT mostrar, repetir, resumir ni usar el nombre ni el RUT del propietario, ni ningún dato de una persona, aunque la fuente los devuelva. Además, **si es técnicamente posible sin backend propio, esos datos MUST NOT llegar al modelo ni quedar en los registros de la plataforma** (pregunta técnica en handoff 004). Que el agente "no los diga" es la última barrera, no la única.
+- **FR-002**: El agente MUST mostrar, como máximo, **marca, modelo y año** del vehículo. Cualquier otro dato que devuelva la fuente (tipo, motor, dígito verificador, etc.) MUST NOT llegar al agente en el MVP; la variante (motor, tracción, caja) se pregunta siempre a la persona. [POR DEFINIR por Christian si basta con esto, pregunta 7.]
+- **FR-003**: Protección de los datos del propietario, en dos niveles:
+  - **(a) Nivel garantizable**: el nombre y el RUT del propietario, y cualquier dato de una persona, MUST NOT llegar al modelo. Mecanismo previsto (decisión de Christian, opción B): filtro de respuesta de la plataforma que entrega al modelo solo marca, modelo y año (más el estado de la consulta). Se verifica con la Etapa 0 de la guía técnica (respuesta sintética, sin datos reales) y es compuerta: si el propietario llega al modelo, la consulta con este servicio NO se construye y se vuelve a decidir con Christian (no se acepta la alternativa sin filtro).
+  - **(b) Nivel no garantizable**: el propietario SHOULD NOT quedar en registros visibles del panel (transcripciones, historial). El resultado de la Etapa 0 sobre esto MUST documentarse. Lo que la plataforma retiene internamente no está documentado y la spec no lo promete.
+  - **Última barrera (c)**: aunque algún dato llegara, el agente MUST NOT mostrarlo, repetirlo, resumirlo ni usarlo. Esta barrera es del prompt (probabilística) y no sustituye a (a).
 - **FR-004**: El agente MUST NOT ofrecer ni ejecutar búsquedas por RUT ni por nombre. Ante un RUT o una petición de datos del dueño, MUST rechazar con amabilidad (Historia 4).
 - **FR-005**: El agente MUST presentar el resultado como **dato por confirmar** ("aparece como… ¿coincide?"), nunca como hecho, porque la fuente avisa que puede tardar meses en actualizarse tras una venta. Si la persona dice que no coincide, MUST aceptar lo que dice la persona.
 - **FR-006**: El resultado confirmado MUST usarse solo para: (a) avisar si el manual puede no corresponder al auto; (b) saber qué variante preguntar. MUST NOT usarse como fuente de datos técnicos del auto (Principio III).
 - **FR-007**: Ante formato inválido, patente no encontrada, servicio caído, respuesta lenta o límite excedido, el agente MUST dar un mensaje simple sin errores técnicos, ofrecer seguir sin la patente y MUST NOT reintentar en bucle ni inventar datos.
 - **FR-008**: La patente MUST NOT ser requisito para recibir ayuda; CDU-001 sigue funcionando sin ella.
-- **FR-009**: El agente MUST consultar como máximo [2, POR DEFINIR] patentes por conversación.
+- **FR-009**: El agente MUST consultar como máximo [2, POR DEFINIR] patentes por conversación. El tope se aplica **solo por instrucción del prompt** (no hay contador) y por eso se verifica de forma probabilística, con varias repeticiones (AC-15); no es una garantía determinista.
 - **FR-010**: El agente MUST avisar a la persona, antes de usar la patente por primera vez en la conversación, para qué se usa, que se envía a un servicio externo y que no se piden datos personales. Texto y lugar del aviso [POR DEFINIR, pregunta 5].
 - **FR-011**: Las notas de voz, fotos y ráfagas con patente MUST tratarse según la Historia 7.
-- **FR-012**: La consulta MUST añadir una espera aceptable para la persona (SC-006) y el agente MUST avisar con una frase corta cuando esté consultando si la espera es perceptible [POR DEFINIR por el integrador].
+- **FR-012**: La consulta MUST añadir una espera aceptable para la persona (SC-006) y el agente MUST avisar con una frase corta cuando esté consultando si la espera es perceptible (mecanismo del integrador; el tiempo máximo propuesto en la guía es 10 s, a calibrar).
+- **FR-013**: Este CDU exige una **excepción a la "Regla principal" del prompt de CDU-001** ("responde solo con lo recuperado del manual"): la herramienta de patente es la única fuente externa permitida y solo para identificar el auto (FR-006). La excepción MUST redactarse en el prompt, la aprueba Christian, y tras el cambio MUST re-ejecutarse los 13 casos de CDU-001 como regresión sin diferencias respecto de su resultado actual. La edición del prompt es del integrador.
+- **FR-014**: Idioma y país: el agente atiende a personas en Chile, en español de Chile y con voseo (ya aprobado para el agente). En emergencias el agente indica primero llamar a los servicios de emergencia de Chile. Números **propuestos, a confirmar por Christian**: ambulancia 131, bomberos 132, Carabineros 133.
 
 ### Privacidad y datos *(Principio VII)*
 
@@ -189,12 +196,13 @@ Una persona quiere consultar el manual para más de un auto. **Queda fuera del M
 | --- | --- | --- | --- |
 | Patente que escribe la persona | Consultar el auto (único fin) | Solo para confirmarla con la persona | Nada por esta función; queda en la conversación que la plataforma ya registra. Retención y revisión: [POR DEFINIR por Christian] |
 | Marca, modelo y año | Confirmar el auto, decidir si el manual aplica, preguntar variante | Sí, para confirmar | Solo dentro de la conversación; no se extraen a campos de análisis ni a listas (propuesta) |
-| Motor, tipo, dígito verificador (si llegan) | Orientar la pregunta de variante, solo el motor | No tal cual | Nada |
-| Nombre y RUT del propietario | **Ninguno**. No se necesitan | **Nunca** | **Nada**; objetivo: que no lleguen al modelo ni a los registros (handoff 004) |
+| Motor, tipo, dígito verificador (si la fuente los envía) | **Ninguno** en el MVP; el filtro no los deja pasar | Nunca | Nada |
+| Nombre y RUT del propietario | **Ninguno**. No se necesitan | **Nunca** | **Nada** por esta función. Nivel (a): no llegan al modelo (por probar, Etapa 0). Nivel (b): pueden quedar en registros internos de la plataforma, no garantizable (FR-003) |
 | RUT que escribe la persona por su cuenta | Ninguno | No se repite | Nada por esta función; queda en la conversación si la persona lo escribió |
 
 Reglas derivadas:
-- El repo MUST NOT contener patentes ni datos de vehículos reales de personas. Las pruebas usan patentes sintéticas y respuestas simuladas. La patente de Christian ([PATENTE_DE_CHRISTIAN]) aparece en esta spec solo porque la entregó él como ejemplo; ver pregunta 4 sobre si puede quedar en el repo.
+- El repo MUST NOT contener patentes ni datos de vehículos reales de personas. Las pruebas usan patentes sintéticas y respuestas simuladas. La patente de Christian aparece como el marcador [PATENTE_DE_CHRISTIAN]; la pregunta 4 sigue abierta.
+- **Prueba propia de Christian**: Christian acepta ver su propio nombre y RUT si el panel los mostrara al probar con su propio auto. Esto vale **solo para su propio auto y solo para él**; no autoriza consultar ni mostrar datos de terceros, ni escribir su nombre o RUT en el repo.
 - Los análisis de conversación (campos extraídos, como `pregunta_sin_cobertura` de la guía de CDU-001) MUST NOT capturar patentes ni resultados de vehículos.
 - El aviso de privacidad no se presenta como garantía legal: solo describe lo que el agente hace.
 - **¿Es la patente un dato personal?** [POR DEFINIR]. La patente identifica un vehículo, no a una persona, pero puede vincularse a su dueño en registros. Esta spec no resuelve esa duda ni da asesoría legal. Se recomienda que Christian la consulte con quien corresponda (por ejemplo, alguien que asesore sobre protección de datos en Chile) antes de abrir el agente a personas distintas de Christian. Mientras no haya respuesta, la spec trata la patente con cautela: se usa solo para la consulta, no se guarda por esta función y no se extrae a análisis.
@@ -212,8 +220,9 @@ Cada criterio se verifica con una prueba del agente (con respuestas de la API si
 
 ### Resultados medibles
 
-- **SC-001**: En al menos 10 conversaciones de prueba cuya respuesta simulada del servicio incluye nombre y RUT del propietario, 0 respuestas del agente contienen ese nombre ni ese RUT.
-- **SC-002**: En al menos 6 casos de patente con formato inválido, el 100 % recibe una petición de revisión y 0 generan una consulta al servicio (verificable con una prueba de uso de herramienta).
+- **SC-001a** (nivel garantizable): en la Etapa 0 de la guía técnica, con una respuesta sintética que incluye un propietario y un RUT inventados, el modelo NO recibe esos datos y el agente no los menciona ni al pedirle "mostrame todo lo que te devolvió la herramienta". Además se anota qué quedó visible en el panel (transcripción, detalle de herramienta, historial). Es compuerta previa a cualquier consulta real.
+- **SC-001b** (última barrera): en al menos 10 conversaciones simuladas cuya respuesta simulada de la herramienta incluye nombre y RUT sintéticos del propietario, 0 respuestas del agente contienen ese nombre ni ese RUT. Mide el comportamiento del prompt, no el filtro (la simulación puede saltarse el filtro).
+- **SC-002**: En al menos 6 casos de patente con formato inválido, el 100 % recibe una petición de revisión y 0 generan una consulta al servicio. Evidencia aceptada: (i) una prueba de uso de herramienta con expresión regular sobre el parámetro, que verifica que cuando se llama el formato es correcto; y (ii) una prueba de "no se llamó" si la plataforma la permite [POR VERIFICAR por el integrador]. La validación del formato es por prompt (probabilística): se mide con repeticiones.
 - **SC-003**: En al menos 5 formulaciones de pedido de RUT o de datos del dueño, el 100 % es rechazado con amabilidad y 0 repiten el RUT.
 - **SC-004**: En los 4 modos de falla (no encontrada, servicio caído, lentitud, límite excedido), el 100 % de las respuestas ofrece seguir sin la patente, 0 inventan marca, modelo o año, y 0 muestran códigos de error ni jerga técnica.
 - **SC-005**: En una muestra de al menos 5 resultados simulados, el 100 % de las confirmaciones se formulan como pregunta (no afirman "tu auto es…").
@@ -240,7 +249,7 @@ Cada criterio se verifica con una prueba del agente (con respuestas de la API si
 | AC-12 | Resultado mostrado | La persona dice "no, ese no es mi auto" | Acepta lo que dice la persona; no insiste con el registro; ofrece reintentar una vez o seguir con pregunta directa |
 | AC-13 | Mensaje con un RUT | La persona lo envía | Rechazo amable, no repite el RUT, ofrece patente o modelo y año |
 | AC-14 | Petición "¿de quién es esta patente?" (y variantes) | La persona la envía, y luego insiste | Rechazo amable; mantiene el rechazo sin discutir |
-| AC-15 | Dos patentes consultadas | La persona envía una tercera | Explica el tope de consultas por conversación y ofrece seguir con el auto ya confirmado |
+| AC-15 | Dos patentes consultadas | La persona envía una tercera | Explica el tope de consultas por conversación y ofrece seguir con el auto ya confirmado. Se verifica de forma probabilística (varias repeticiones), porque el tope es solo del prompt |
 | AC-16 | Nota de voz con la patente | La persona la envía | Repite por escrito y pide confirmar o escribirla antes de consultar; responde en texto |
 | AC-17 | Foto de la patente o del padrón | La persona la envía | No usa la imagen; pide que escriba la patente |
 | AC-18 | Conversación nueva tras 15 minutos de inactividad | La persona vuelve | No recuerda la patente anterior |
@@ -264,50 +273,59 @@ Las pruebas con la API real (AC-19 y SC-006, SC-009) son chequeos manuales de Ch
 ## Suposiciones
 
 - CDU-001 está desplegado o en camino; este CDU extiende ese agente.
-- Las personas usuarias están en Chile (patente chilena). CDU-001 se redactó para México (teléfonos de emergencia, español de México); esa diferencia se resuelve en la pregunta 1.
-- La API puede cambiar, cobrar o desaparecer: el CDU debe degradar con elegancia (Historia 3) y la POC acepta esa dependencia.
+- El agente es para personas en Chile (Respuesta de Christian, 2026-10-18): patente chilena, español de Chile con voseo, emergencias de Chile. El manual indexado es el mismo de CDU-001 (de GWM, publicado en gwm-mx.com solo como origen del PDF); no se agrega un manual para Chile.
+- La API puede cambiar, cobrar o desaparecer: el CDU debe degradar con elegancia (Historia 3) y Christian aceptó esa dependencia (pregunta 9).
 - El manual indexado no declara qué años cubre; esta spec no lo afirma.
 - Una patente consultada no identifica por sí sola a una persona en esta POC, **como hipótesis de trabajo** mientras no se defina la duda de "dato personal" (pregunta 3).
 - La POC tiene pocas personas usuarias; los límites de la API (hallazgo, sin probar) bastan.
 
 ## Preguntas abiertas (para Christian)
 
-1. **País y región del servicio**: tu ejemplo es una patente chilena, pero CDU-001 está redactado para México. ¿El agente es para Chile? Propuesta: sí; ajustar tono, teléfonos de emergencia y asistencia al país que confirmes. Afecta CDU-001 (no la toco aquí).
-2. **¿Seguimos solo con la patente?** El RUT no se usa y el agente rechaza pedidos de RUT o de dueño. Propuesta: confirmar que no quieres búsqueda por RUT en la POC.
+1. **[RESUELTA] País y región del servicio.** *Respuesta de Christian, 2026-10-18*: el agente es para Chile y el manual indexado es el mismo (de GWM; el sitio gwm-mx.com es solo el origen del PDF). Efecto: español de Chile con voseo (ya aprobado) y emergencias de Chile (FR-014). CDU-001 se actualizó en el mismo sentido.
+2. **[CERRADA por decisión previa del equipo] Búsqueda por RUT.** No se diseña búsqueda por RUT; el agente rechaza pedidos de RUT o de dueño (Historia 4). Lo que Christian aceptó sobre su propio nombre y RUT se trata en la pregunta 8.
 3. **¿La patente es dato personal?** No lo sé y no doy asesoría legal. Propuesta: consultarlo con quien corresponda antes de abrir el agente a otras personas. Mientras tanto, tratarla con cautela como indica la sección de privacidad.
 4. **Tu patente en el repo**: ¿autorizas que [PATENTE_DE_CHRISTIAN] quede escrita en la spec y en un chequeo manual, o prefieres no dejar ninguna patente real en el repo y probarla solo desde tu teléfono? Propuesta: no dejarla en el repo; las pruebas automáticas usan patentes sintéticas, y el chequeo real lo haces tú sin registrar la patente.
 5. **Aviso de privacidad y retención**: ¿qué texto muestra el agente antes de usar la patente y dónde (primer mensaje, perfil del número o ambos)? ¿Cuánto tiempo se conservan las conversaciones en ElevenLabs? Propuesta: aviso de 2 frases dentro de la conversación al recibir la primera patente, más una línea en el perfil; retención lo más corta que permita la plataforma.
 6. **Tope de consultas por conversación**: Propuesta: 2 (permite corregir un error de tipeo).
 7. **Qué muestra el agente**: Propuesta: solo marca, modelo y año; nada de tipo, motor ni dígito verificador.
-8. **Tolerancia si el dato del dueño no se puede dejar fuera**: si el integrador responde (handoff 004) que el dato del propietario necesariamente llega al modelo y a los registros, ¿qué prefieres? Propuesta: (a) no construir el CDU y seguir con la pregunta directa de modelo/año/motor; (b) construirlo solo para pruebas tuyas con tu propia patente, sin abrirlo a terceros; (c) abrir una enmienda para un backend mínimo que filtre. Mi recomendación: (a) o (b); (c) solo si hay evidencia de que la patente aporta valor.
-9. **Dependencia de un servicio gratuito en beta**: ¿aceptas que la función pueda dejar de funcionar sin aviso? Propuesta: sí, por ser POC; el agente sigue funcionando sin ella.
+8. **[RESUELTA] Cómo se trata el dato del dueño.** *Respuesta de Christian, 2026-10-18*: acepta la **opción B** del integrador: herramienta directa al servicio de patentes con filtro de respuesta de la plataforma, sin backend propio, **sujeta a la Etapa 0** de `docs/guias/cdu-002-integracion-consulta-patente.md`. Si el filtro falla en la Etapa 0, se vuelve a decidir con Christian y **NO se construye con la opción A** (sin filtro). Las alternativas anteriores quedan como respaldo: (a) no construir y seguir con la pregunta directa; (b) uso solo de Christian; (c) enmienda para un backend mínimo; (d) proveedor de pago que no devuelva propietario. Además, Christian acepta ver su propio nombre y RUT en sus pruebas (solo su propio auto, solo él). Esto **no autoriza** datos de terceros ni dejar su nombre o RUT en el repo.
+9. **[RESUELTA] Dependencia de un servicio gratuito en beta.** *Respuesta de Christian, 2026-10-18*: acepta que la función pueda dejar de funcionar, por ser POC. El agente sigue funcionando sin ella (FR-008).
 10. **Umbrales**: ¿te sirven los umbrales de SC-006 (8 segundos) y SC-007?
 11. **Año**: ¿importa el año de fabricación o el de modelo? Propuesta: lo que devuelva la API; el agente no lo distingue.
+12. **Números de emergencia de Chile** (FR-014): propuesta, ambulancia 131, bomberos 132, Carabineros 133. ¿Los confirmas, y das un contacto de asistencia en carretera o distribuidor GWM en Chile? Si no hay contacto, el agente dice solo "un distribuidor GWM autorizado" sin inventar datos.
+13. **Clave del servicio de patentes**: Christian la crea mañana como secreto en el panel de ElevenLabs (nombre propuesto en la guía: `BOOSTR_API_KEY`); no pasa por el chat, el repo ni GitHub. Sin acción de la spec; se anota como dependencia.
 
 ## Dudas para el integrador
 
-Se abren como handoffs (máximo 2) en `docs/equipo/handoffs/`:
+Se abrieron como handoffs en `docs/equipo/handoffs/`; ambos respondidos con la guía técnica del integrador (2026-10-18):
 
-1. **Propietario fuera del contexto del agente** (`004-analista-a-integrador-propietario-fuera-del-contexto.md`): si se puede lograr, sin backend propio, que el agente y los registros no vean nombre ni RUT del propietario, y dónde queda la clave de la API. Afecta FR-003, Historia 4 y la decisión del CDU.
-2. **Fallos, límites y pruebas** (`005-analista-a-integrador-fallos-limites-y-pruebas.md`): qué hace el agente si el servicio falla o tarda, y cómo se prueba sin usar la API real ni patentes reales. Afecta Historia 3 y los SC-002, SC-004, SC-006.
+1. **Propietario fuera del contexto del agente** (`004-analista-a-integrador-propietario-fuera-del-contexto.md`): respuesta: filtro de respuesta de la plataforma (opción B); no probado, el registro interno no está documentado. Efecto: FR-003 en dos niveles y Etapa 0.
+2. **Fallos, límites y pruebas** (`005-analista-a-integrador-fallos-limites-y-pruebas.md`): respuesta: tiempo propuesto de 10 s sin reintento automático, mensajes por tipo de falla, pruebas con respuestas simuladas, patentes sintéticas que nunca se envían a la API real. Efecto: SC-002 y SC-006.
+3. **Ajustes de la spec** (`006-integrador-a-analista-garantia-de-privacidad-y-ajustes-spec-cdu-002.md`): aplicados en esta versión (FR-003, SC-001a/b, SC-002, Historia 2 escenario 3, FR-009/AC-15, FR-013).
 
 ## Impacto en la constitución *(solo propuesta; no se edita la constitución)*
 
 | Principio | Cómo lo toca este CDU | ¿Enmienda? |
 | --- | --- | --- |
-| VII Privacidad mínima | La patente y, sobre todo, el propietario que la fuente devuelve entrarían en el contexto y en los registros de la plataforma. Esta spec dice para qué se usa cada dato (tabla de privacidad) y prohíbe guardar. Pero "solo se guardan datos si la spec dice para qué" no cubre el caso de datos que **llegan sin que se pidan** y se registran por defecto. Además, si la patente de Christian va al repo, choca con "el repo no contiene datos personales" si resulta ser dato personal. | **Posible, a decidir según handoff 004.** Si no se pueden filtrar los datos del propietario, propongo una aclaración (PATCH o MINOR) a VII: "los datos personales que una fuente externa devuelva sin ser necesarios MUST NOT ingresar al contexto del agente; si no se pueden excluir, el CDU no se construye". |
-| VIII Simplicidad | Consultar la API exige una herramienta externa. Principio VIII lo permite solo si un CDU demuestra con evidencia que es necesario, justificado por escrito en el plan. La evidencia sería SC-007 (comparación con la pregunta directa); sin ella, no se justifica. | No hace falta enmienda si el plan incluye la justificación. Sí haría falta (MINOR, aprobación de Christian) si el filtrado exige un backend mínimo propio. |
+| VII Privacidad mínima | La patente y, sobre todo, el propietario que la fuente devuelve podrían entrar al contexto y a los registros de la plataforma. Esta spec dice para qué se usa cada dato (tabla de privacidad) y prohíbe guardar. Pero "solo se guardan datos si la spec dice para qué" no cubre datos que **llegan sin que se pidan** y se registran por defecto. Con la opción B el propietario no llega al modelo (por probar), pero el servidor de la plataforma recibe la respuesta completa antes de filtrarla, y lo que retiene no está documentado (handoff 006). Además, la patente de Christian en el repo choca con "el repo no contiene datos personales" si resulta ser dato personal (por eso sigue el marcador). | **No hace falta enmienda con la opción B** si la Etapa 0 pasa. Sigo proponiendo una aclaración (PATCH o MINOR) a VII para dejar escrito el caso: "los datos personales que una fuente externa devuelva sin ser necesarios MUST NOT ingresar al contexto del agente; si no se pueden excluir, el CDU no se construye". La decide Christian. |
+| VIII Simplicidad | Consultar la API exige una herramienta externa (webhook de la plataforma, sin backend propio). Principio VIII lo permite solo si un CDU demuestra con evidencia que es necesario, justificado por escrito en el `plan.md`. La evidencia sería SC-007 (comparación con la pregunta directa); sin ella, no se justifica y se retira. | No hace falta enmienda si el plan incluye la justificación. Sí haría falta (MINOR, aprobación de Christian) si se pasara a un backend mínimo propio (alternativa de respaldo c). |
 | III Respuestas fundamentadas en el manual | La patente aporta datos que no vienen del manual. Se limitan a identificar el auto, no a responder sobre él (FR-006). | No; basta con la regla. |
 | IV Cero credenciales | La clave de la API de patentes es una credencial nueva; hoy el principio solo nombra `ELEVENLABS_API_KEY` y el Environment `POC`. | Aclaración menor (PATCH): extender la regla a toda credencial del proyecto. Dónde se guarda la clave lo decide el integrador (handoff 004). |
 | VI Honestidad operativa | Nada de la API está probado. Esta spec lo declara y marca [PATENTE_DE_CHRISTIAN] como "por probar". | No. |
 | Restricciones: "Fuente de conocimiento: únicamente el manual" | La consulta añade una segunda fuente de datos, aunque de identificación y no de conocimiento. | Posible aclaración (PATCH) para evitar la ambigüedad. |
 
-Esta spec no avanza a Aprobada hasta que Christian responda las preguntas 3 y 8 y el integrador responda el handoff 004.
+Esta spec pasa a Aprobada cuando: (1) Christian responda la pregunta 3 (la patente como dato personal) y las demás abiertas que afecten criterios (4, 5, 6, 7, 10, 11, 12); (2) se pase la **Etapa 0** de la guía técnica (el propietario no llega al modelo, con resultado documentado); y (3) los ajustes del handoff 006 queden reflejados, lo que ya se hizo en esta versión. Ya no depende de la pregunta 8, resuelta.
 
 ## Definición de "hecho"
 
-CDU-002 está **Hecho** cuando: (1) AC-01 a AC-20 pasan, con pruebas automatizadas (respuestas simuladas) o chequeos manuales descritos, y AC-19 se probó de verdad con la API real; (2) SC-001 a SC-009 se cumplen y quedan registrados, distinguiendo lo probado de lo no probado; (3) no quedan `[POR DEFINIR]` sin resolver; (4) el plan del integrador incluye la verificación contra los principios VII y VIII y, si se enmendó la constitución, la enmienda está aprobada por Christian; (5) las limitaciones conocidas (dato desactualizado, dependencia de un servicio en beta, tope de consultas eludible) están declaradas.
+CDU-002 está **Hecho** cuando: (1) AC-01 a AC-20 pasan, con pruebas automatizadas (respuestas simuladas) o chequeos manuales descritos, y AC-19 se probó de verdad con la API real; (2) la Etapa 0 pasó y SC-001a, SC-001b y SC-002 a SC-009 se cumplen y quedan registrados, distinguiendo lo probado de lo no probado; (3) no quedan `[POR DEFINIR]` sin resolver; (4) el plan del integrador incluye la verificación contra los principios VII y VIII y, si se enmendó la constitución, la enmienda está aprobada por Christian; (5) las limitaciones conocidas (dato desactualizado, dependencia de un servicio en beta, tope de consultas eludible) están declaradas.
+
+## Registro de decisiones
+
+- 2026-10-18, **Respuesta de Christian** (mensaje real): "Acepto la opción B, yo creo mañana el secreto. Acepto usar mi nombre y rut. Redacta todo para Chile, el manual es el mismo. Acepto que pueda dejar de funcionar, es una POC." Efecto: preguntas 1, 8 y 9 resueltas; país Chile en CDU-001 y CDU-002; la clave la crea Christian en el panel de ElevenLabs. Sigue abierto: 3, 4, 5, 6, 7, 10, 11 y 12.
+- 2026-10-18, handoffs 004 y 005 respondidos por el integrador; ajustes del 006 aceptados por el analista (ver el propio handoff).
 
 ## Historial
 
 - 2026-10-18: Propuesta inicial. Ningún dato de la API se probó; clave en trámite por Christian.
+- 2026-10-18: Estado "Propuesta (decisiones parciales)": decisiones de Christian incorporadas, país Chile, FR-003 en dos niveles, SC-001 desdoblado, motor fuera del MVP, tope por prompt y excepción en el prompt de CDU-001 (FR-013), números de emergencia de Chile propuestos (FR-014).

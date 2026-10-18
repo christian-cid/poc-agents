@@ -12,13 +12,15 @@
 
 **Reemplaza**: el brief anterior de CDU-001 en `docs/equipo/COORDINACION.md` ("¿En qué te ayudo?"). Ese saludo queda como parte del flujo (primer mensaje, historia 1). La sección "Primer CDU" de COORDINACION.md debe actualizarse (la edita quien sea dueño de ese archivo; ver "Dudas para el integrador").
 
+**País del servicio**: Chile (Respuesta de Christian, 2026-10-18; ver "Registro de decisiones"). Español de Chile con voseo (ya aprobado para el agente). El manual indexado es el mismo de GWM; el PDF se publica en gwm-mx.com, dato que se mantiene solo como origen del archivo.
+
 **Contexto fijo**: plan Starter de ElevenLabs, un solo número de WhatsApp dedicado, sin backend propio, solo texto salvo que Christian decida otra cosa. Contexto técnico en `docs/guias/cdu-001-servicios-y-configuracion.md` (del integrador; esta spec define el qué, no el cómo).
 
 **Aviso de verificación**: el PDF del manual todavía no se pudo descargar ni leer. Esta spec no afirma nada sobre su contenido (capítulos, cifras, versión, tablas). Donde falta el dato real aparece `<del manual>`; se completa al revisar el PDF y antes de pasar a Aprobada. Los datos de plataforma citados vienen de la guía del integrador y siguen "por verificar" hasta que él los confirme.
 
 ## Problema y usuario
 
-**Quién**: una persona que tiene (o está por comprar) un GWM Haval H6 en México y tiene una duda mientras usa el auto o en casa.
+**Quién**: una persona que tiene (o está por comprar) un GWM Haval H6 en Chile y tiene una duda mientras usa el auto o en casa.
 
 **Problema**: el manual es un PDF largo; encontrar cómo se hace algo, qué significa una luz del tablero o qué dato técnico aplica cuesta tiempo, y en una situación con riesgo (una luz roja, olor a gasolina) cuesta más.
 
@@ -73,7 +75,7 @@ El agente trata con especial cuidado las preguntas con riesgo y las de contenido
 **Escenarios de aceptación**:
 
 1. **Dado** una situación con riesgo (por ejemplo olor a combustible, humo, luz roja del tablero, frenos, airbags, niños en el auto, llantas dañadas), **cuando** el agente responde, **entonces** primero da la advertencia tal como la formula el manual, después el procedimiento del manual, y si el manual no cubre el caso recomienda detenerse en un lugar seguro y contactar asistencia o a un distribuidor autorizado, sin instrucciones de reparación propias. La lista definitiva de temas críticos es [POR DEFINIR por Christian].
-2. **Dado** una persona que describe un accidente, incendio o heridos, **cuando** el agente responde, **entonces** lo primero que dice es que llame a los servicios de emergencia locales (número `<POR DEFINIR por Christian>`), antes de cualquier consulta al manual.
+2. **Dado** una persona que describe un accidente, incendio o heridos, **cuando** el agente responde, **entonces** lo primero que dice es que llame a los servicios de emergencia de Chile (números propuestos, a confirmar por Christian: ambulancia 131, bomberos 132, Carabineros 133), antes de cualquier consulta al manual.
 3. **Dado** una pregunta sobre una luz o indicador del tablero descrito con palabras (color, forma, nombre), **cuando** el agente responde, **entonces** da el significado y la acción indicados por el manual para esa luz; si la descripción coincide con más de una luz, hace una pregunta aclaratoria (color o símbolo) antes de responder; si el manual no la describe, lo dice.
 4. **Dado** una pregunta sobre un procedimiento con varios pasos, **cuando** el agente responde, **entonces** respeta el orden del manual, no omite advertencias intercaladas y, si es largo, lo divide en mensajes coherentes sin cortar un paso a la mitad.
 5. **Dado** una pregunta que se responde con una tabla del manual (por ejemplo especificaciones, presiones, capacidades, intervalos de servicio `<del manual>`), **cuando** el agente responde, **entonces** da el valor y la unidad exactos del manual con sus condiciones (por ejemplo carga o medida de llanta), sin redondear, convertir ni estimar; si el valor depende de una condición que la persona no dijo, pregunta por ella.
@@ -231,17 +233,17 @@ Las pruebas de llegada real por WhatsApp, indicador de escritura, cierre a los 1
 - La integración nativa de WhatsApp de ElevenLabs permite todo lo descrito (texto, tipos de mensaje, cierre a 15 minutos); el integrador debe confirmarlo (ver Dudas).
 - El plan Starter alcanza (o se recorta con aprobación de Christian) para el contenido del manual.
 - No hay canal alternativo cuando WhatsApp o el agente fallan; es una POC con pocas personas usuarias.
-- Las personas usuarias escriben principalmente en español de México.
+- Las personas usuarias están en Chile y escriben principalmente en español de Chile (Respuesta de Christian, 2026-10-18).
 - El manual tiene derechos de GWM; se usa solo como fuente interna de la POC y no se distribuye.
 
 ## Preguntas abiertas (para Christian)
 
 1. **Versión del auto**: ¿año, versión y motorización exactos de tu Haval H6 (gasolina, híbrido, PHEV; actualización de modelo)? ¿Confirmas que `ManualUsuarioHAVALH6.pdf` es el manual correcto y que indexamos solo ese? Propuesta: sí, un solo manual en este CDU.
-2. **Tono e idioma**: ¿español de México con "tú" o con "usted"? Propuesta: "tú", cálido y directo, sin tecnicismos innecesarios. ¿Y si escriben en inglés? Propuesta: responder en español y pasar a inglés solo si la persona insiste.
+2. **Tono e idioma**: español de Chile con voseo, ya aprobado para el agente (la propuesta original de "tú" queda reemplazada); cálido y directo, sin tecnicismos innecesarios. Falta confirmar si se acepta "usted" cuando la persona lo use. ¿Y si escriben en inglés? Propuesta: responder en español y pasar a inglés solo si la persona insiste.
 3. **Notas de voz**: ¿se atienden (entender el audio y responder en texto) o se rechazan pidiendo que escriban? Propuesta: atender si no agrega costo relevante y responder siempre en texto; de lo contrario rechazar con amabilidad.
 4. **Fotos**: ¿se permite interpretarlas (por ejemplo el tablero) o se pide describir con palabras? Propuesta: pedir descripción (más seguro, menos riesgo de error en luces).
 5. **Recorte por tamaño**: si el manual no cabe en el plan Starter, ¿aceptas recortar capítulos (con prioridad: seguridad, luces del tablero, uso y operación, mantenimiento y especificaciones) o prefieres subir de plan para cubrir todo? Condiciona SC-006.
-6. **Contacto real**: ¿qué teléfono o canal de asistencia en carretera o distribuidor se puede dar? Si no hay uno, el agente solo dice "un distribuidor GWM autorizado" sin inventar datos. Y el número de emergencias a mencionar (propuesta: el número de emergencias de México).
+6. **Contacto real**: ¿qué teléfono o canal de asistencia en carretera o distribuidor se puede dar? Si no hay uno, el agente solo dice "un distribuidor GWM autorizado" sin inventar datos. Y los números de emergencias a mencionar (propuesta para Chile, a confirmar por Christian: ambulancia 131, bomberos 132, Carabineros 133).
 7. **Temas críticos y aviso fijo**: ¿qué temas se consideran críticos además de frenos, airbags, combustible, humo, luces rojas, niños y llantas? ¿Se agrega siempre un aviso del tipo "esto no sustituye una revisión en un taller autorizado" en respuestas de seguridad? Propuesta: sí, una frase corta al final.
 8. **Despedida por inactividad**: ¿se envía un mensaje al cerrar por los 15 minutos? Propuesta: no enviar ninguno.
 9. **Aviso de privacidad**: ¿se informa a la persona que sus mensajes se procesan en ElevenLabs y Meta? Propuesta: sí, una línea en el perfil del número, no en cada conversación.
@@ -261,6 +263,10 @@ Pendiente fuera de handoff: la actualización de la sección "Primer CDU" de `do
 ## Definición de "hecho"
 
 CDU-001 está **Hecho** cuando: (1) los criterios AC-01 a AC-17 pasan, con las pruebas automatizadas o chequeos manuales descritos; (2) SC-001 a SC-008 se cumplen en una muestra registrada; (3) el informe de cobertura (Historia 6) está aprobado por Christian; (4) no quedan `[POR DEFINIR]` ni `<del manual>` sin resolver en esta spec; (5) las limitaciones conocidas están declaradas.
+
+## Registro de decisiones
+
+- 2026-10-18, **Respuesta de Christian** (mensaje real, dado en el contexto del CDU-002): "Redacta todo para Chile, el manual es el mismo." Efecto en este CDU: país del servicio = Chile; español de Chile con voseo; emergencias de Chile propuestas (131, 132, 133) a confirmar; se quitan los supuestos de México. Sin cambios en los requisitos funcionales más allá de esto. El PDF sigue siendo el de gwm-mx.com porque es un hecho de origen.
 
 ## Historial
 

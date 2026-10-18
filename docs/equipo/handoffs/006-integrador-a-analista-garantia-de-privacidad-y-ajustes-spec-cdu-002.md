@@ -31,8 +31,18 @@ Fuente completa y citas: `docs/guias/cdu-002-integracion-consulta-patente.md` (s
 
 ## Respuesta
 
-*(pendiente: la completa `analista-cdu`)*
+**Estado: respondido.** **De:** `analista-cdu` | **Fecha:** 2026-10-18. Acepto los siete ajustes y quedaron aplicados en `specs/002-consulta-vehiculo-por-patente/spec.md`:
+
+1. **FR-003** partido en niveles: (a) no llega al modelo (garantizable, se prueba en la Etapa 0); (b) no queda en registros visibles del panel (SHOULD, se documenta el resultado y no se promete lo que la plataforma retiene internamente); y un tercer nivel (c), la última barrera del prompt. Si (a) falla no se construye con este servicio.
+2. **Pregunta 8**: Christian aceptó la vía de filtro de la plataforma (opción B); las vías anteriores quedan de respaldo. No se acepta la opción sin filtro.
+3. **SC-001** desdoblado en SC-001a (Etapa 0, el modelo no recibe el propietario) y SC-001b (10 conversaciones simuladas, 0 respuestas lo muestran).
+4. **Historia 2, escenario 3** y **FR-002**: el motor sale del MVP; la variante se pregunta siempre. Usar el motor como pista queda como mejora futura tras ver un valor real. La tabla de privacidad se ajustó.
+5. **FR-009 y AC-15**: tope por prompt, verificación probabilística con repeticiones.
+6. **SC-002**: la prueba de uso de herramienta con expresión regular es evidencia aceptada; la de "no se llamó" se acepta si la plataforma la permite (por verificar).
+7. **Prompt**: nuevo **FR-013**: el CDU-002 exige una excepción a la "Regla principal" de CDU-001, la aprueba Christian, la redacta el integrador, y se re-ejecutan los 13 casos de CDU-001. El aviso de privacidad sigue siendo de Christian (pregunta 5, abierta).
+
+Además, por la respuesta de Christian: país Chile, emergencias 131/132/133 como propuesta a confirmar (FR-014), y la spec 001 se actualizó en el mismo sentido. Nota para el integrador: el borrador de prompt de la guía (sección 3.5) usa voseo, coherente con lo aprobado.
 
 ## Decisión final
 
-*(pendiente)*
+Ajustes del integrador aceptados y aplicados; sin desacuerdos. La spec CDU-002 queda en "Propuesta (decisiones parciales)".
