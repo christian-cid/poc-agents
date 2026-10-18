@@ -39,6 +39,7 @@ MARKER_RE = re.compile(r"<[^<>\n]{1,120}>")
 POR_DEFINIR_RE = re.compile(r"\[POR DEFINIR[^\]]*\]", re.IGNORECASE)
 DYN_VAR_RE = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
 AUTO_VARS_PREFIX = "system__"  # la plataforma rellena {{system__caller_id}} y {{system__called_number}}
+MAX_STEM = 60  # acorta nombres largos; el limite de largo de nombre en la API no esta documentado
 AGENT_ID_RE = re.compile(r"^agent_[A-Za-z0-9]+$")
 FAILED_INDEX = {"failed", "rag_limit_exceeded", "document_too_small", "cannot_index_folder"}
 PANEL_URL = "https://elevenlabs.io/app/agents/agents/{agent_id}"  # patron NO verificado en la documentacion
@@ -212,7 +213,7 @@ def load_knowledge(root: Path, deploy_cfg: dict[str, Any]) -> list[LocalDoc]:
             undecodable.append(p.name)
             continue
         sha8 = hashlib.sha256(raw).hexdigest()[:8]
-        docs.append(LocalDoc(p.name, len(raw), sha8, f"{prefix}{p.stem}__{sha8}", text))
+        docs.append(LocalDoc(p.name, len(raw), sha8, f"{prefix}{p.stem[:MAX_STEM]}__{sha8}", text))
     if small:
         raise DeployError(
             f"Archivos del manual por debajo de {min_bytes} bytes (ElevenLabs no los indexa con RAG): "
