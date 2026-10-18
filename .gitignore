@@ -21,3 +21,6 @@ node_modules/
 # Salidas locales
 *.log
 tmp/
+
+# Ajustes locales de Claude Code (pueden contener datos privados)
+.claude/settings.local.json
