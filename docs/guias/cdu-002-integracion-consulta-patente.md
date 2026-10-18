@@ -1,6 +1,6 @@
 # CDU-002: integración de la consulta de vehículo por patente (plan técnico y propuesta)
 
-Estado: **propuesta para revisar. No se construyó nada y nada se probó contra ningún servicio real.** Fecha de verificación de la documentación: 2026-10-18.
+Estado: **opción B aceptada por Christian el 2026-10-18 (ver sección 8). Sigue siendo una propuesta técnica: no se construyó nada y nada se probó contra ningún servicio real.** Siguiente paso: Christian crea el secreto `BOOSTR_API_KEY` en el panel de ElevenLabs (mañana, 2026-10-19). La spec del CDU-002 sigue en estado Propuesta hasta que el analista la actualice. Fecha de verificación de la documentación: 2026-10-18.
 Autor: `integrador-elevenlabs-whatsapp`. Spec de referencia: `specs/002-consulta-vehiculo-por-patente/spec.md` (estado Propuesta, leída hoy; ver sección 9 con las diferencias).
 Qué NO toca este documento: la constitución, la spec, el prompt aprobado, `agent_configs/`, `scripts/` ni los workflows. Todo lo que dice "se cambiaría" es una propuesta.
 
@@ -12,7 +12,8 @@ Sobre la patente de Christian: la spec la reemplaza por `[PATENTE_DE_CHRISTIAN]`
 
 ## 0. Resumen ejecutivo
 
-1. **Recomendación: opción B**, una herramienta de servidor (webhook) de ElevenLabs que llama directo a Boostr y usa el **filtro de respuesta (`response_filter`, modo `allow`)** para que el modelo reciba solo `data.make`, `data.model` y `data.year` (más `status`/`code` para los errores). La documentación de la API de ElevenLabs describe ese filtro como "allow-list filter applied to the response before the LLM sees it" (sección 1). Si funciona como dice, el nombre y el RUT del propietario no llegan al modelo, no hace falta backend propio y **no hace falta enmendar la constitución** (hace falta justificar la herramienta externa por escrito en el `plan.md`, principio VIII).
+0. **Decisiones de Christian (2026-10-18):** acepta la opción B, crea él el secreto `BOOSTR_API_KEY` en el panel de ElevenLabs (mañana), acepta ver su propio nombre y RUT en sus pruebas (solo de su propio auto), acepta que Boostr pueda dejar de funcionar (es una POC) y define que el agente es **para Chile**; el manual es el mismo. Sigue abierto todo lo demás de la sección 8. Aceptar ver su dato **no** reemplaza la Etapa 0: esa etapa sigue siendo la forma de comprobar que el LLM no ve al propietario.
+1. **Recomendación (aceptada): opción B**, una herramienta de servidor (webhook) de ElevenLabs que llama directo a Boostr y usa el **filtro de respuesta (`response_filter`, modo `allow`)** para que el modelo reciba solo `data.make`, `data.model` y `data.year` (más `status`/`code` para los errores). La documentación de la API de ElevenLabs describe ese filtro como "allow-list filter applied to the response before the LLM sees it" (sección 1). Si funciona como dice, el nombre y el RUT del propietario no llegan al modelo, no hace falta backend propio y **no hace falta enmendar la constitución** (hace falta justificar la herramienta externa por escrito en el `plan.md`, principio VIII).
 2. **Lo que el filtro NO garantiza**, y hay que decirlo a Christian: la documentación explica el filtro como una forma de no contaminar el contexto del modelo; **no dice que el dato filtrado quede fuera del registro interno de ElevenLabs**. El servidor de ElevenLabs recibe la respuesta completa de Boostr antes de filtrarla. Por eso FR-003, segunda parte ("no queden en los registros de la plataforma"), queda como **no garantizada hasta una prueba** (sección 7, Etapa 0) y como riesgo declarado.
 3. **Compuerta antes de usar ninguna patente real**: probar el filtro con una respuesta sintética (con nombre y RUT inventados) servida desde un JSON estático, en un agente de prueba aparte, y mirar en el historial de conversaciones qué quedó guardado. Si el propietario aparece en el modelo, en el transcript o en el historial, la opción B se descarta y se pasa a E (sin integración) o D (proveedor que no devuelve propietario).
 4. **La opción A (sin filtro) no es aceptable**: pone nombre y RUT de una persona en el contexto de un LLM de terceros y en un historial que por defecto se conserva 2 años (sección 2).
@@ -208,6 +209,18 @@ Se agregarían al prompt como bloque nuevo y tocan la regla "Responde SOLO con l
 
 Nota: la última línea de "Regla principal" del prompt actual habría que reescribirla para que diga que la herramienta es la única excepción permitida; es un cambio al texto aprobado y pasa por Christian. Todo cambio de prompt requiere las pruebas del agente en verde (principio II), y además re-ejecutar los 13 casos de CDU-001 como regresión.
 
+### 3.6 Prompt para Chile (propuesta; NO se editó `agent_configs/`)
+
+Christian definió el 2026-10-18 que el agente es para Chile (el manual es el mismo). El prompt aprobado v0.1 ya usa voseo y no nombra país; lo único que cambia es la regla de emergencias, que hoy dice "servicios de emergencia locales". Propuesta de reemplazo, **a confirmar por Christian** (los tres números son los de uso habitual en Chile: ambulancia 131, bomberos 132, Carabineros 133; no los verifiqué en una fuente oficial desde este entorno):
+
+```
+Ante una emergencia (accidente, incendio, personas heridas) indica llamar de inmediato a los
+servicios de emergencia de Chile antes de cualquier otra cosa: 131 (ambulancia), 132 (bomberos)
+o 133 (Carabineros).
+```
+
+Nota: se mantiene el estilo del prompt aprobado (instrucciones al modelo en imperativo; el voseo aplica a cómo habla el agente). Todo cambio de prompt exige las pruebas del agente en verde y repetir los 13 casos de CDU-001 (más el caso nuevo de emergencia: "Huelo gasolina... y hubo un accidente", que debe mencionar 131/132/133 si Christian los confirma).
+
 ---
 
 ## 4. Cambios necesarios en el repo (propuestos; no ejecutados)
@@ -262,9 +275,9 @@ Cualquiera de las dos requiere que la clave de ElevenLabs que usa el despliegue 
 
 ### 4.6 Orden y esfuerzo (en pasos, sin horas)
 
-1. Responder los handoffs 004/005 (con esta guía) y 006; Christian responde las decisiones de la sección 8. Spec a Aprobada.
-2. **Spike con Christian**: crear el secreto y la herramienta una vez (panel) para leer la forma exacta con `GET /v1/convai/tools/{id}` y resolver lo "por verificar" de `request_headers`, plan Starter y `{patente}.json`.
-3. Etapa 0 de pruebas (sección 7.1) con el JSON sintético en un agente de prueba aparte. **Compuerta.**
+1. **Christian crea el secreto `BOOSTR_API_KEY`** en el panel de ElevenLabs (planificado para 2026-10-19). La clave nunca va al chat, al repo ni a GitHub. Aviso: con el secreto creado pero sin herramienta no pasa nada; el uso real empieza recién tras el paso 3.
+2. El analista responde los handoffs 004/005 (con esta guía) y 006, y actualiza la spec (Aprobada). **Spike con Christian**: crear la herramienta una vez desde el panel para leer la forma exacta con `GET /v1/convai/tools/{id}` y resolver lo "por verificar" de `request_headers`, plan Starter y `{patente}.json`.
+3. **Etapa 0 de pruebas (sección 7.1)** con el JSON sintético en un agente de prueba aparte. **Compuerta antes de cualquier patente real**, aunque Christian haya aceptado ver su propio dato: es la única forma de comprobar que el LLM no recibe al propietario.
 4. Código: cliente, script, validaciones y pruebas unitarias (4.1 a 4.5), con `--check` en verde.
 5. Prompt v0.2 aprobado por Christian y casos de simulador/automáticos (7.3).
 6. Despliegue con `dry_run`, luego real; pruebas del agente en verde; regresión de los 13 casos de CDU-001.
@@ -362,7 +375,7 @@ Patentes sintéticas: **nunca se envían a la API real**. Las pruebas automátic
 ### 7.4 Prueba real con `[PATENTE_DE_CHRISTIAN]` (la hace él, desde su teléfono, solo después de la Etapa 0)
 
 1. Un intento; el agente debe identificar un Haval H6 y pedir confirmación (AC-19, SC-009). Se registra solo "probado/no probado" y el resultado, sin escribir la patente.
-2. Se abre esa conversación en el panel y se anota qué quedó guardado del resultado de la herramienta (nombre y RUT de su propio auto, si aparecieran, se tratan como dato de él; **decisión de Christian si acepta verlos o no**).
+2. Se abre esa conversación en el panel y se anota qué quedó guardado del resultado de la herramienta. Christian aceptó (2026-10-18) ver su propio nombre y RUT en sus pruebas; vale **solo para su propio auto**, nunca para patentes de otras personas, y no cambia el orden: esta prueba va después de la Etapa 0.
 3. Se mide la latencia en al menos 5 mensajes (SC-006). Hasta entonces, la latencia es **no medible**.
 4. Se repite una vez por el número de WhatsApp para confirmar que la herramienta funciona en ese canal.
 
@@ -378,27 +391,42 @@ Patentes sintéticas: **nunca se envían a la API real**. Las pruebas automátic
 
 ---
 
-## 8. Decisiones pendientes para Christian (con propuesta)
+## 8. Decisiones para Christian
 
-1. **¿Aceptás la opción B (filtro de ElevenLabs hacia Boostr) y la compuerta de la Etapa 0?** Propuesta: sí; si el filtro falla, se descarta Boostr y se vuelve a E.
-2. **¿Cómo guardamos la clave de Boostr?** Propuesta: la creás vos en el panel de ElevenLabs como secreto de nombre `BOOSTR_API_KEY`; no pasa por el chat, el repo ni GitHub.
+### 8.1 Resueltas (Respuesta de Christian, 2026-10-18)
+
+Mensaje de Christian (retransmitido por el coordinador): "Acepto la opción B, yo creo mañana el secreto. Acepto usar mi nombre y rut. Redacta todo para Chile, el manual es el mismo. Acepto que pueda dejar de funcionar, es una POC."
+
+| # | Decisión | Respuesta de Christian (2026-10-18) | Efecto |
+| --- | --- | --- | --- |
+| 1 | Opción B (filtro de ElevenLabs hacia Boostr) y compuerta de la Etapa 0 | **Resuelta: acepta B.** La Etapa 0 se mantiene como compuerta técnica (aceptar ver su dato no la reemplaza). | Plan de la sección 4.6 |
+| 2 | Dónde vive la clave de Boostr | **Resuelta:** la crea él, mañana (2026-10-19), como secreto `BOOSTR_API_KEY` en el panel de ElevenLabs. Nunca por chat ni repo. | Paso 1 del plan; sección 4.4 |
+| 4 | Ver su propio nombre y RUT en sus pruebas | **Resuelta: acepta**, solo de su propio auto. | Sección 7.4; la Etapa 0 sigue antes |
+| 11 | Aceptar que Boostr deje de funcionar sin aviso | **Resuelta: acepta** (es una POC). | Sección 6; plan de salida de la sección 2 |
+| 12 | País | **Resuelta: Chile**, manual el mismo. | Sección 3.6 (prompt para Chile) y guía de CDU-001 |
+
+Pendiente derivado de la 12 (no es nueva decisión): los números de emergencia 131/132/133 de la sección 3.6 son una **propuesta a confirmar** por Christian, y el cambio del prompt aprobado lo aprueba él después.
+
+Nota sobre la 3 (repo público o no): sigue abierta abajo; Christian no la respondió.
+
+### 8.2 Siguen abiertas (con propuesta)
+
 3. **Etapa 0 con un JSON sintético publicado desde el repo**: ¿el repositorio es público? Propuesta: sí se publica solo el JSON inventado; si el repo es privado, usamos otro alojamiento estático.
-4. **¿Probás con tu patente solo después de la Etapa 0, y aceptás ver el nombre y RUT de tu propio auto si el panel los mostrara?** Propuesta: sí, un único intento, sin escribir la patente en el repo.
 5. **Aviso de privacidad y retención**: texto de 2 frases (en el chat al recibir la primera patente + línea en el perfil del número) y retención lo más corta que permita Starter (por verificar). Propuesta: redactar con vos; no es garantía legal.
 6. **¿La patente es dato personal?** Propuesta: consultarlo con quien asesore sobre protección de datos en Chile antes de abrir el agente a otras personas (con la Ley 21.719 próxima a regir). Mientras tanto, solo uso tuyo.
 7. **Qué muestra el agente**: propuesta, solo marca, modelo y año (el motor queda fuera; la variante se pregunta).
 8. **Tope de patentes por conversación**: propuesta, 2, aplicado solo por prompt (no hay contador).
 9. **Tiempo de espera**: propuesta, 10 s (el mínimo del sistema es 5), a calibrar con la latencia real.
 10. **Si querés una garantía total de que el propietario no pasa por ElevenLabs**: C con enmienda o D (de pago). Propuesta: no ahora; decidir después de la Etapa 0.
-11. **Aceptar que la función pueda dejar de funcionar sin aviso** (Boostr gratis y en beta). Propuesta: sí, por ser POC.
-12. **País**: la spec pregunta si el agente es para Chile (teléfonos de emergencia). Propuesta: sí; es un cambio del prompt de CDU-001 que no se hace sin tu aprobación.
 13. **Modelo de lenguaje**: sigue pendiente la decisión de CDU-001; con herramientas, medir si `gemini-2.5-flash` llama bien a la herramienta.
+14. **Aprobar el cambio del prompt** (excepción a la "Regla principal", bloque de patente y emergencias de Chile, secciones 3.5 y 3.6). No se aplica hasta que lo apruebe.
+15. **Confirmar los números de emergencia 131/132/133** (sección 3.6).
 
 ---
 
 ## 9. Diferencias con la spec del CDU-002 (leída hoy) y handoffs 004/005
 
-La spec existe (estado Propuesta) y la leí completa. Coincide en que el MVP es marca, modelo y año, el propietario nunca se muestra, y B no exige enmienda. Diferencias a resolver (las pido en el handoff 006):
+La spec existe (estado Propuesta) y la leí completa. Coincide en que el MVP es marca, modelo y año, el propietario nunca se muestra, y B no exige enmienda. Diferencias a resolver (las pido en el handoff 006). La pregunta 1 de la spec (país) quedó resuelta por Christian: Chile (sección 8.1); el analista debe reflejarlo en la spec:
 
 1. **FR-003, segunda parte** ("no lleguen al modelo ni queden en los registros de la plataforma"): se puede apuntar a "no llegan al modelo" con un mecanismo documentado; "ni quedan en los registros" **no está garantizado ni documentado**. Propongo partirlo en dos niveles.
 2. **Pregunta 8 de la spec** (opciones a/b/c): existe una cuarta vía, (d) filtro de la plataforma, que evita la enmienda. Las opciones a/b/c siguen valiendo como respaldo.
