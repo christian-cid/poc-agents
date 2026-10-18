@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report
-- Version change: (plantilla sin ratificar) -> 1.0.0
+- Version change: (plantilla sin ratificar) -> 1.0.0 -> 1.0.1 (PATCH: el despliegue usa la API REST y no el CLI; aprobado por Christian el 2026-10-18)
 - Principios modificados: ninguno renombrado; la plantilla vacía se reemplaza por 8 principios nuevos (I-VIII)
 - Secciones añadidas: Restricciones y alcance de la POC; Flujo de trabajo y gobernanza; Gobernanza
 - Secciones eliminadas: ninguna (todos los marcadores de la plantilla fueron resueltos)
@@ -13,7 +13,7 @@ Sync Impact Report
 POC de un agente de WhatsApp construido con ElevenLabs que responde preguntas sobre el auto
 (GWM Haval H6) únicamente desde su manual de usuario indexado con RAG, sin backend propio en el
 camino crítico. Se construye con Spec-Driven Development (Spec Kit) y se despliega con GitHub
-Actions y el CLI de ElevenLabs.
+Actions y la API REST de ElevenLabs (el CLI no documenta aún el formato de agentes ni de conocimiento).
 
 ## Core Principles
 
@@ -82,7 +82,7 @@ complejidad MUST justificarse por escrito en el plan del CDU que la requiere.
 - **Fuera de alcance:** llamadas de voz, plantillas de mensajes salientes y traspaso a humano. Una
   spec que los necesite MUST abrir primero una enmienda de esta sección.
 - **Fuente de conocimiento:** únicamente el manual de usuario del GWM Haval H6, indexado con RAG.
-- **Despliegue:** GitHub Actions con el CLI de ElevenLabs; ramas `staging` y `main`.
+- **Despliegue:** GitHub Actions con la API REST de ElevenLabs (script Python, sin CLI); un solo entorno `POC` por ahora. `staging` y `main` quedan para cuando exista más de un entorno.
 
 ## Flujo de trabajo y gobernanza
 
@@ -110,4 +110,4 @@ complejidad MUST justificarse por escrito en el plan del CDU que la requiere.
   I-VIII (qué principio aplica y cómo se cumple); cada revisión de PR MUST confirmar el
   cumplimiento. Toda desviación MUST justificarse por escrito en el plan y aprobarse.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-18 | **Last Amended**: 2026-10-18
+**Version**: 1.0.1 | **Ratified**: 2026-10-18 | **Last Amended**: 2026-10-18

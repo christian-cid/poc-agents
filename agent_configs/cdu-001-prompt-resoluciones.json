@@ -1,17 +1,17 @@
 {
-  "comentario": "Resoluciones de los marcadores <...> del prompt. Solo se aplican las que tienen aprobado=true; mientras quede un marcador sin resolver el despliegue falla. Las entradas de abajo son PROPUESTAS del integrador, sin aprobar: la decision es de Christian / analista-cdu.",
+  "comentario": "Resoluciones de los marcadores <...> del prompt. Solo se aplican las que tienen aprobado=true; mientras quede un marcador sin resolver el despliegue falla. Entradas aprobadas por Christian el 2026-10-18.",
   "resoluciones": [
     {
       "buscar": "\"(Manual, cap. <del manual>, p. <del manual>)\"",
       "reemplazar": "\"(Manual, capítulo y página tal como figuren en el contexto)\"",
-      "aprobado": false,
-      "nota": "PROPUESTA. El texto original tiene dos marcadores que solo se pueden rellenar con datos del PDF; esta redaccion evita inventar numeros y le dice al agente que cite lo que venga en el fragmento recuperado."
+      "aprobado": true,
+      "nota": "APROBADA por Christian (2026-10-18). El texto original tiene dos marcadores que solo se pueden rellenar con datos del PDF; esta redaccion evita inventar numeros y le dice al agente que cite lo que venga en el fragmento recuperado."
     },
     {
       "buscar": " <Ajustar según prueba del LLM.>",
       "reemplazar": "",
-      "aprobado": false,
-      "nota": "PROPUESTA. Es una nota para quien edita, no una instruccion para el agente: se elimina. El ajuste de fotos se hara tras probar el LLM elegido."
+      "aprobado": true,
+      "nota": "APROBADA por Christian (2026-10-18). Es una nota para quien edita, no una instruccion para el agente: se elimina. El ajuste de fotos se hara tras probar el LLM elegido."
     }
   ]
 }

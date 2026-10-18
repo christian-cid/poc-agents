@@ -33,12 +33,12 @@ def make_tree(tmp_path: Path, *, approve_resolutions: bool = True, files: dict[s
     (root / "agent_configs").mkdir(parents=True)
     for name in ("cdu-001-agent.json", "cdu-001-system-prompt.md", "cdu-001-prompt-resoluciones.json"):
         shutil.copy(REPO / "agent_configs" / name, root / "agent_configs" / name)
-    if approve_resolutions:
-        p = root / "agent_configs" / "cdu-001-prompt-resoluciones.json"
-        data = json.loads(p.read_text(encoding="utf-8"))
-        for r in data["resoluciones"]:
-            r["aprobado"] = True
-        p.write_text(json.dumps(data), encoding="utf-8")
+    # Se fija el estado de aprobacion de forma explicita: no depende del archivo real del repo.
+    p = root / "agent_configs" / "cdu-001-prompt-resoluciones.json"
+    data = json.loads(p.read_text(encoding="utf-8"))
+    for r in data["resoluciones"]:
+        r["aprobado"] = approve_resolutions
+    p.write_text(json.dumps(data), encoding="utf-8")
     kdir = root / "knowledge" / "manual-h6"
     kdir.mkdir(parents=True)
     for fname, text in (files if files is not None else {"01-uno.md": BIG, "02-dos.md": BIG + " dos"}).items():
@@ -59,16 +59,16 @@ def run_sync(fake, cfg, prompt, docs, **kw):
 
 
 # ------------------------------------------------------------------ prompt y marcadores
-def test_prompt_real_tiene_marcadores_y_el_despliegue_falla():
-    """Estado real del repo: el prompt v0.1 trae <...>; sin resoluciones aprobadas debe fallar claro."""
-    with pytest.raises(da.DeployError) as exc:
-        text = (REPO / "agent_configs" / "cdu-001-system-prompt.md").read_text(encoding="utf-8")
-        prompt = da.extract_prompt_block(text)
-        res = json.loads((REPO / "agent_configs" / "cdu-001-prompt-resoluciones.json").read_text(encoding="utf-8"))
-        prompt, pending = da.apply_resolutions(prompt, res)
-        da.check_unresolved(prompt, pending)
-    msg = str(exc.value)
-    assert "<del manual>" in msg and "sin resolver" in msg and "aprobado" in msg
+def test_prompt_real_con_sus_resoluciones_queda_sin_marcadores():
+    """Estado real del repo: el prompt v0.1 trae <...> y las resoluciones aprobadas por Christian lo limpian."""
+    text = (REPO / "agent_configs" / "cdu-001-system-prompt.md").read_text(encoding="utf-8")
+    prompt = da.extract_prompt_block(text)
+    assert da.MARKER_RE.search(prompt), "el prompt original aun trae marcadores que las resoluciones deben cubrir"
+    res = json.loads((REPO / "agent_configs" / "cdu-001-prompt-resoluciones.json").read_text(encoding="utf-8"))
+    assert all(r["aprobado"] is True for r in res["resoluciones"])
+    prompt, pending = da.apply_resolutions(prompt, res)
+    da.check_unresolved(prompt, pending)  # no debe lanzar
+    assert not da.MARKER_RE.search(prompt)
 
 
 def test_resoluciones_propuestas_aprobadas_limpian_todos_los_marcadores(tmp_path):
