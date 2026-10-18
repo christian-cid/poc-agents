@@ -1,0 +1,23 @@
+# Secretos y entornos
+.env
+.env.*
+!.env.example
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# Sistema y editores
+.DS_Store
+.idea/
+.vscode/
+
+# Salidas locales
+*.log
+tmp/
